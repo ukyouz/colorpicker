@@ -1,22 +1,24 @@
 class RGB {
     constructor(r, g, b) {
-        this.r = r & 0xFF; // integer
-        this.g = g & 0xFF; // integer
-        this.b = b & 0xFF; // integer
+        this.r = r; // float
+        this.g = g; // float
+        this.b = b; // float
     }
     toString() {
-        return '#'+this.r.toString(16).toUpperCase().padStart(2, '0')+
-                   this.g.toString(16).toUpperCase().padStart(2, '0')+
-                   this.b.toString(16).toUpperCase().padStart(2, '0');
+        let r = Math.round(255 * this.r), g = Math.round(255 * this.g), b = Math.round(255 * this.b);
+        return '#'+r.toString(16).toUpperCase().padStart(2, '0')+
+                   g.toString(16).toUpperCase().padStart(2, '0')+
+                   b.toString(16).toUpperCase().padStart(2, '0');
     }
     toInt() {
-        return (this.r << 16) | (this.g << 8) | (this.b);
+        let r = Math.round(255 * this.r), g = Math.round(255 * this.g), b = Math.round(255 * this.b);
+        return (r << 16) | (g << 8) | (b);
     }
     toRGB() {
         return this;
     }
     toCMYK() {
-        let Rc = 1 - this.r / 255.0, Gc = 1 - this.g / 255.0, Bc = 1 - this.b / 255.0;
+        let Rc = 1 - this.r, Gc = 1 - this.g, Bc = 1 - this.b;
         let k = Math.min(Rc, Gc, Bc);
         if (k == 1) {
             return new CMYK(0, 0, 0, 1);
@@ -24,7 +26,7 @@ class RGB {
         return new CMYK((Rc-k)/(1-k), (Gc-k)/(1-k), (Bc-k)/(1-k), k);
     }
     toHSL() {
-        let r = this.r / 255, g = this.g / 255, b = this.b / 255;
+        let r = this.r, g = this.g, b = this.b;
         let min = Math.min(r, g, b), max = Math.max(r, g, b);
         let h = 0, s = 0, l = (max + min) / 2;
         if (max == min)
@@ -43,10 +45,10 @@ class RGB {
             s = (max-min)/(max+min);
         else if (l > 1/2)
             s = (max-min)/(2-(max+min));
-        return new HSL(h, s, l);
+        return new HSL(h/360, s, l);
     }
     toHSV() {
-        let r = this.r / 255, g = this.g / 255, b = this.b / 255;
+        let r = this.r, g = this.g, b = this.b;
         let min = Math.min(r, g, b), max = Math.max(r, g, b);
         let h = 0, s = 0, v = max;
         if (max == min)
@@ -61,7 +63,7 @@ class RGB {
             h = 60 * (r - g) / (max - min) + 240;
         if (max > 0)
             s = 1 - min/max;
-        return new HSV(h, s, v);
+        return new HSV(h/360, s, v);
     }
 }
 class CMYK {
@@ -75,7 +77,7 @@ class CMYK {
         let tc = this.c * (1-this.k) + this.k;
         let tm = this.m * (1-this.k) + this.k;
         let ty = this.y * (1-this.k) + this.k;
-        return new RGB(0xFF * (1-tc), 0xFF * (1-tm), 0xFF*(1-ty));
+        return new RGB(1-tc, 1-tm, 1-ty);
     }
 }
 class HSL {
@@ -102,17 +104,17 @@ class HSL {
     }
     toRGB() {
         if (this.s == 0) {
-            return new RGB(100*this.l, 100*this.l, 100*this.l);
+            return new RGB(this.l, this.l, this.l);
         }
         let q = (this.l<0.5)*(this.l*(1+this.s)) + (this.l>=0.5)*(this.l+this.s-(this.l*this.s));
         let p = 2 * this.l - q;
-        let hk = this.h / 360;
+        let hk = this.h;
         let tR = this._tColorNormalize(hk + 1/3);
         let tG = this._tColorNormalize(hk);
         let tB = this._tColorNormalize(hk - 1/3);
-        return new RGB(0xFF*this._tColor2RGBSpace(tR,p,q),
-                       0xFF*this._tColor2RGBSpace(tG,p,q),
-                       0xFF*this._tColor2RGBSpace(tB,p,q));
+        return new RGB(this._tColor2RGBSpace(tR,p,q),
+                       this._tColor2RGBSpace(tG,p,q),
+                       this._tColor2RGBSpace(tB,p,q));
     }
 }
 class HSV {
@@ -122,9 +124,9 @@ class HSV {
         this.v = v; // float
     }
     toRGB() {
-        let hi = Math.floor(this.h / 60) % 6;
-        let f = this.h / 60 - hi;
-        let v = 0xFF * this.v;
+        let hi = Math.floor(this.h * 360 / 60) % 6;
+        let f = this.h * 360 / 60 - hi;
+        let v = this.v;
         let p = v * (1 - this.s);
         let q = v * (1 - this.s * f);
         let t = v * (1 - this.s * (1 - f));
@@ -165,11 +167,12 @@ var zplot = document.getElementById("z-plot"); zplot.width = 30, zplot.height = 
 var ctx_z = zplot.getContext("2d");
 var z_indicator = document.getElementById("z-plot-indicator");
 var preview = document.getElementById("preview-box");
-var curr_xy = [0, 0], curr_z = 0, curr_z_axis = 'H';
+var curr_xy = [0.0, 0.0], curr_z = 0.0, curr_z_axis = 'H';
+let STD_AXIS_255 = (val) => Math.sign(val) * (val > 0) * Math.round(val) - (val > 255)*(Math.round(val) - 255);
 // Create gradient
-function drawVertGradient(ctx, x_range, start_color, end_color) {
-    for (let x = 0; x <= 0xFF; x++) {
-        var xi = x * x_range / 0xFF;
+function drawVertGradient(ctx, start_color, end_color) {
+    for (let x = 0; x <= 255; x++) {
+        var xi = x / 255;
         var grd = ctx.createLinearGradient(0, 0, 1, 256);
         grd.addColorStop(0, (start_color(xi)).toRGB().toString()); // y = 0,   visually top
         grd.addColorStop(1, (end_color(xi)).toRGB().toString());   // y = 255, visually bottom
@@ -180,26 +183,32 @@ function drawVertGradient(ctx, x_range, start_color, end_color) {
 }
 function drawZGradient(ctx, color_callback) {
     for (let y = 0; y <= 255; y++) {
-        let color = color_callback(255-y);
-        ctx.fillStyle = color.toString();
+        let color = color_callback((255-y)/255);
+        ctx.fillStyle = color.toRGB().toString();
         ctx.fillRect(0, y, 30, y);
     }
 }
 function drawXYplot(ctx, z_axis, val) {
+    //FIX: `val` scale
     if (z_axis == 'H') {
-        drawVertGradient(ctx, 0xFF, (x)=>new HSV(val, x/0xFF, 1), (x)=>new HSV(val, x/0xFF, 0));
+        drawVertGradient(ctx, (x)=>new HSV(val, x, 1), (x)=>new HSV(val, x, 0));
+        drawZGradient(ctx_z,  (z)=>new HSV(z, 1, 1));
     } else if (z_axis == 'S') {
-        drawVertGradient(ctx, 360,  (x)=>new HSV(x, val, 1),      (x)=>new HSV(0, val, 0));
+        drawVertGradient(ctx, (x)=>new HSV(x, val, 1), (x)=>new HSV(0, val, 0));
+        drawZGradient(ctx_z,  (z)=>new HSV(curr_xy[0], z, curr_xy[1]));
     } else if (z_axis == 'V') {
-        drawVertGradient(ctx, 0xFF, (x)=>new HSV(x, 1, val),      (x)=>new HSV(0, 0, val));
+        drawVertGradient(ctx, (x)=>new HSV(x, 1, val), (x)=>new HSV(0, 0, val));
+        drawZGradient(ctx_z,  (z)=>new HSV(curr_xy[0], curr_xy[1], z));
     } else if (z_axis == 'R') {
-        drawVertGradient(ctx, 0xFF, (x)=>new RGB(val, 0xFF, x),   (x)=>new RGB(val, 0, x));
+        drawVertGradient(ctx, (x)=>new RGB(val, 1, x), (x)=>new RGB(val, 0, x));
+        drawZGradient(ctx_z,  (z)=>new RGB(z, curr_xy[1], curr_xy[0]));
     } else if (z_axis == 'G') {
-        drawVertGradient(ctx, 0xFF, (x)=>new RGB(0xFF, val, x),   (x)=>new RGB(0, val, x));
+        drawVertGradient(ctx, (x)=>new RGB(1, val, x), (x)=>new RGB(0, val, x));
+        drawZGradient(ctx_z,  (z)=>new RGB(curr_xy[1], z, curr_xy[0]));
     } else if (z_axis == 'B') {
-        drawVertGradient(ctx, 0xFF, (x)=>new RGB(x, 0xFF, val),   (x)=>new RGB(x, 0, val));
+        drawVertGradient(ctx, (x)=>new RGB(x, 1, val), (x)=>new RGB(x, 0, val));
+        drawZGradient(ctx_z,  (z)=>new RGB(curr_xy[0], curr_xy[1], z));
     }
-    // TODO: CMYK
 }
 function drawCircle(ctx, x, y, r, color, width) {
     ctx.lineWidth = width;
@@ -221,32 +230,34 @@ function updateXYplot(x, y, update) {
     ctx_xy.clearRect(0, 0, ctx_xy.width, ctx_xy.height);
     preview.style.backgroundColor = "black";
     drawXYplot(ctx_xy, curr_z_axis, curr_z);
-    drawXYplotCursor(ctx_xy, x, y, update);
+    drawXYplotCursor(ctx_xy, x, 255-y, update);
     if (update) {
-        curr_xy = [x, y];
+        curr_xy = [x/255, y/255];
+        console.log('xy changed', curr_xy);
     }
-    drawZGradient(ctx_z, (y) => new RGB(curr_xy[0], curr_xy[1], y));
-    drawCircle(ctx_xy, curr_xy[0], curr_xy[1], 8, "white", 1.5);
+    drawCircle(ctx_xy, x, 255-y, 8, "white", 1.5);
 }
 function updateZindicator(evt, update) {
     if (update) {
         var rect = xyplot.getBoundingClientRect();
-        var z = STD_AXIS_VALUE(evt.clientY - rect.top);
-        z_indicator.style.top = z + "px";
+        var visual_z = STD_AXIS_255(evt.clientY - rect.top);
+        var z = 1 - visual_z / 255;
+        console.log('z changed', z);
+        z_indicator.style.top = visual_z + "px";
         curr_z = z;
+        updateXYplot(255*curr_xy[0], 255*curr_xy[1], true);
     }
 }
-updateXYplot(0, 0);
+updateXYplot(0, 0, true);
 
 // if x < 0: x = 0
 // if x > 255: x = 255
-let STD_AXIS_VALUE = (val) => Math.sign(val) * (val > 0) * Math.round(val) - (val > 255)*(Math.round(val) - 255);
 
 let xy_drag = false;
 function updateXYplotByXYaxis(mouseX, mouseY) {
     var rect = xyplot.getBoundingClientRect();
-    var x = STD_AXIS_VALUE(mouseX - rect.left);
-    var y = STD_AXIS_VALUE(mouseY - rect.top);
+    var x = STD_AXIS_255(mouseX - rect.left);
+    var y = (255 - STD_AXIS_255(mouseY - rect.top));
     updateXYplot(x, y, xy_drag);
 }
 addEvent(document, 'mouseup', function (evt) {
@@ -282,7 +293,7 @@ addEvent('input[type=radio]', 'change', function(evt) {
     // console.log('z changed', dataform.coloraxis.value, evt.target.value);
     curr_z_axis = evt.target.value;
     curr_z = dataform['coloraxis_'+curr_z_axis].value;
-    updateXYplot(curr_xy[0], curr_xy[1], true);
+    updateXYplot(255*curr_xy[0], 255*curr_xy[1], true);
     // drawXYplot(ctx_xy, curr_z_axis, curr_z);
     // drawZGradient(ctx_z, (y) => new RGB(202, 100, y));
 });

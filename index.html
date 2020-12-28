@@ -124,21 +124,21 @@
                                 <input type="radio" id="label_coloraxis_red" name="coloraxis" value="R">
                                 <span class="color-label">R:</span>
                             </label>
-                            <input type="number" name="coloraxis_R" value="0">
+                            <input type="number" name="coloraxis_R" value="0" min="0" max="255" step="1">
                         </li>
                         <li class="color-field">
                             <label for="label_coloraxis_green">
                                 <input type="radio" id="label_coloraxis_green" name="coloraxis" value="G">
                                 <span class="color-label">G:</span>
                             </label>
-                            <input type="number" name="coloraxis_G" value="0">
+                            <input type="number" name="coloraxis_G" value="0" min="0" max="255" step="1">
                         </li>
                         <li class="color-field">
                             <label for="label_coloraxis_blue">
                                 <input type="radio" id="label_coloraxis_blue" name="coloraxis" value="B">
                                 <span class="color-label">B:</span>
                             </label>
-                            <input type="number" name="coloraxis_B" value="0">
+                            <input type="number" name="coloraxis_B" value="0" min="0" max="255" step="1">
                         </li>
                         <li class="color-field">
                             <span class="radio_padding"></span>
@@ -153,7 +153,7 @@
                                 <input type="radio" id="label_coloraxis_hue" name="coloraxis" value="H" checked="checked">
                                 <span class="color-label">H:</span>
                             </label>
-                            <input type="number" name="coloraxis_H" value="0">
+                            <input type="number" name="coloraxis_H" value="0" min="0" max="360" step="1">
                             <span class="color-label">˚</span>
                         </li>
                         <li class="color-field">
@@ -161,7 +161,7 @@
                                 <input type="radio" id="label_coloraxis_saturate" name="coloraxis" value="S">
                                 <span class="color-label">S:</span>
                             </label>
-                            <input type="number" name="coloraxis_S" value="0">
+                            <input type="number" name="coloraxis_S" value="0" min="0" max="100" step="1">
                             <span class="color-label">%</span>
                         </li>
                         <li class="color-field">
@@ -169,41 +169,33 @@
                                 <input type="radio" id="label_coloraxis_brightness" name="coloraxis" value="V">
                                 <span class="color-label">B:</span>
                             </label>
-                            <input type="number" name="coloraxis_V" value="0">
+                            <input type="number" name="coloraxis_V" value="0" min="0" max="100" step="1">
                             <span class="color-label">%</span>
                         </li>
                     </ul>
                     <ul class="color-mode color-mode__cmyk">
                         <li class="color-field">
-                            <label for="label_coloraxis_cyan">
-                                <input type="radio" id="label_coloraxis_cyan" name="coloraxis" value="C">
-                                <span class="color-label">C:</span>
-                            </label>
-                            <input type="number" name="coloraxis_C" value="0">
+                            <span class="radio_padding"></span>
+                            <span class="color-label">C:</span>
+                            <input type="number" name="coloraxis_C" value="0" min="0" max="100" step="1">
                             <span class="color-label">%</span>
                         </li>
                         <li class="color-field">
-                            <label for="label_coloraxis_yellow">
-                                <input type="radio" id="label_coloraxis_yellow" name="coloraxis" value="Y">
-                                <span class="color-label">Y:</span>
-                            </label>
-                            <input type="number" name="coloraxis_Y" value="0">
+                            <span class="radio_padding"></span>
+                            <span class="color-label">Y:</span>
+                            <input type="number" name="coloraxis_Y" value="0" min="0" max="100" step="1">
                             <span class="color-label">%</span>
                         </li>
                         <li class="color-field">
-                            <label for="label_coloraxis_magenta">
-                                <input type="radio" id="label_coloraxis_magenta" name="coloraxis" value="M">
-                                <span class="color-label">M:</span>
-                            </label>
-                            <input type="number" name="coloraxis_M" value="0">
+                            <span class="radio_padding"></span>
+                            <span class="color-label">M:</span>
+                            <input type="number" name="coloraxis_M" value="0" min="0" max="100" step="1">
                             <span class="color-label">%</span>
                         </li>
                         <li class="color-field">
-                            <label for="label_coloraxis_black">
-                                <input type="radio" id="label_coloraxis_black" name="coloraxis" value="K">
-                                <span class="color-label">K:</span>
-                            </label>
-                            <input type="number" name="coloraxis_K" value="0">
+                            <span class="radio_padding"></span>
+                            <span class="color-label">K:</span>
+                            <input type="number" name="coloraxis_K" value="0" min="0" max="100" step="1">
                             <span class="color-label">%</span>
                         </li>
                     </ul>
