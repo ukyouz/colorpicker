@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Color Picker!</title>
+    <link rel="stylesheet" href="css/reset.css"/>
+    <style>
+        body {
+            min-height: 90vh;
+        }
+        section {
+            display: flex;
+            justify-content: center;
+        }
+        canvas {
+            /* margin: 1em; */
+        }
+        h1 {
+            text-align: center;
+        }
+        ul {
+            list-style-type: none;
+        }
+        form {
+            display: grid;
+            grid-template-columns: 8.5em 8em;
+        }
+        input[type="radio"], span.radio_padding {
+            width: 16px;
+            display: inline-block;
+        }
+        input[type="number"] {
+            width: 2.5em;
+        }
+        #xy-plot {
+            width: 256px;
+            height: 256px;
+            cursor: none;
+        }
+        #z-plot {
+            width: 30px;
+            height: 256px;
+            cursor: grab;
+        }
+        body.dragging,
+        body.dragging #z-plot {
+            cursor: grabbing;
+        }
+        .z-plot-indicator {
+            z-index: -1;
+            position: absolute;
+            width: 100%;
+            padding: 5px 0px;
+            margin-top: -4px;
+        }
+        .z-plot-indicator:before,
+        .z-plot-indicator:after {
+            display: block;
+            position: absolute;
+            top: 0px;
+            font-size: 8px;
+            width: 8px;
+            height: 8px;
+        }
+        .z-plot-indicator:before {
+            content: "▶";
+            left: -8px;
+        }
+        .z-plot-indicator:after {
+            content: "◀";
+            right: -8px;
+        }
+        .align-right {
+            text-align: right;
+        }
+        .panel .col {
+            float: left;
+            margin-right: 1em;
+            position: relative;
+        }
+        .color-mode {
+            padding: 6px;
+        }
+        .color-mode__cmyk {
+            display: grid;
+            grid-template-columns: 7em 7em;
+        }
+        .color-label {
+            font-family: monospace;
+            display: inline-block;
+            width: 1em;
+        }
+        .color-field {
+            margin: 3px 0;
+        }
+        .color-preview__box {
+            width: 70px;
+            height: 70px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Color Picker</h1>
+    <section class="panel">
+        <div class="col">
+            <canvas id="xy-plot" width="255" height="255"></canvas>
+        </div>
+        <div class="col">
+            <div id="z-plot-indicator" class="z-plot-indicator" style="top: 0px"></div>
+            <canvas id="z-plot" width="30" height="255"></canvas>
+        </div>
+        <div class="col">
+            <div class="row">
+                <div class="color-preview">
+                    <div id="preview-box" class="color-preview__box"></div>
+                </div>
+            </div>
+            <div class="row">
+                <form id="dataform" class="color-form">
+                    <ul class="color-mode color-mode__rgb">
+                        <li class="color-field">
+                            <label for="label_coloraxis_red">
+                                <input type="radio" id="label_coloraxis_red" name="coloraxis" value="R">
+                                <span class="color-label">R:</span>
+                            </label>
+                            <input type="number" name="coloraxis_R" value="0">
+                        </li>
+                        <li class="color-field">
+                            <label for="label_coloraxis_green">
+                                <input type="radio" id="label_coloraxis_green" name="coloraxis" value="G">
+                                <span class="color-label">G:</span>
+                            </label>
+                            <input type="number" name="coloraxis_G" value="0">
+                        </li>
+                        <li class="color-field">
+                            <label for="label_coloraxis_blue">
+                                <input type="radio" id="label_coloraxis_blue" name="coloraxis" value="B">
+                                <span class="color-label">B:</span>
+                            </label>
+                            <input type="number" name="coloraxis_B" value="0">
+                        </li>
+                        <li class="color-field">
+                            <span class="radio_padding"></span>
+                            <span class="color-label align-right">#</span>
+                            <input type="text" name="colorcode_rgb" style="width: 3.5em" value="000000">
+                        </li>
+                    </ul>
+                    <ul class="color-mode color-mode__hsb">
+                    <li class="color-field">
+                        <li class="color-field">
+                            <label for="label_coloraxis_hue">
+                                <input type="radio" id="label_coloraxis_hue" name="coloraxis" value="H" checked="checked">
+                                <span class="color-label">H:</span>
+                            </label>
+                            <input type="number" name="coloraxis_H" value="0">
+                            <span class="color-label">˚</span>
+                        </li>
+                        <li class="color-field">
+                            <label for="label_coloraxis_saturate">
+                                <input type="radio" id="label_coloraxis_saturate" name="coloraxis" value="S">
+                                <span class="color-label">S:</span>
+                            </label>
+                            <input type="number" name="coloraxis_S" value="0">
+                            <span class="color-label">%</span>
+                        </li>
+                        <li class="color-field">
+                            <label for="label_coloraxis_brightness">
+                                <input type="radio" id="label_coloraxis_brightness" name="coloraxis" value="V">
+                                <span class="color-label">B:</span>
+                            </label>
+                            <input type="number" name="coloraxis_V" value="0">
+                            <span class="color-label">%</span>
+                        </li>
+                    </ul>
+                    <ul class="color-mode color-mode__cmyk">
+                        <li class="color-field">
+                            <label for="label_coloraxis_cyan">
+                                <input type="radio" id="label_coloraxis_cyan" name="coloraxis" value="C">
+                                <span class="color-label">C:</span>
+                            </label>
+                            <input type="number" name="coloraxis_C" value="0">
+                            <span class="color-label">%</span>
+                        </li>
+                        <li class="color-field">
+                            <label for="label_coloraxis_yellow">
+                                <input type="radio" id="label_coloraxis_yellow" name="coloraxis" value="Y">
+                                <span class="color-label">Y:</span>
+                            </label>
+                            <input type="number" name="coloraxis_Y" value="0">
+                            <span class="color-label">%</span>
+                        </li>
+                        <li class="color-field">
+                            <label for="label_coloraxis_magenta">
+                                <input type="radio" id="label_coloraxis_magenta" name="coloraxis" value="M">
+                                <span class="color-label">M:</span>
+                            </label>
+                            <input type="number" name="coloraxis_M" value="0">
+                            <span class="color-label">%</span>
+                        </li>
+                        <li class="color-field">
+                            <label for="label_coloraxis_black">
+                                <input type="radio" id="label_coloraxis_black" name="coloraxis" value="K">
+                                <span class="color-label">K:</span>
+                            </label>
+                            <input type="number" name="coloraxis_K" value="0">
+                            <span class="color-label">%</span>
+                        </li>
+                    </ul>
+                </form>
+            </div>
+        </div>
+    </section>
+    <script src="js/main.js"></script>
+    </body>
+</body>
+</html>
