@@ -189,38 +189,40 @@ function drawZGradient(ctx, color_callback) {
     }
 }
 function drawXYZplot(ctx, z_axis, val) {
-    if (z_axis == 'H') {
+    switch(z_axis) {
+        case 'H':
         drawVertGradient(ctx, (x)=>new HSV(val, x, 1), (x)=>new HSV(val, x, 0));
-        drawZGradient(ctx_z,  (z)=>new HSV(z, 1, 1));
-    } else if (z_axis == 'S') {
+            drawZGradient(ctx_z,  (z)=>new HSV(z, 1, 1)); break;
+        case 'S':
         drawVertGradient(ctx, (x)=>new HSV(x, val, 1), (x)=>new HSV(0, val, 0));
-        drawZGradient(ctx_z,  (z)=>new HSV(curr_xy[0], z, curr_xy[1]));
-    } else if (z_axis == 'V') {
+            drawZGradient(ctx_z,  (z)=>new HSV(curr_xy[0], z, curr_xy[1])); break;
+        case 'V':
         drawVertGradient(ctx, (x)=>new HSV(x, 1, val), (x)=>new HSV(0, 0, val));
-        drawZGradient(ctx_z,  (z)=>new HSV(curr_xy[0], curr_xy[1], z));
-    } else if (z_axis == 'R') {
+            drawZGradient(ctx_z,  (z)=>new HSV(curr_xy[0], curr_xy[1], z)); break;
+        case 'R':
         drawVertGradient(ctx, (x)=>new RGB(val, 1, x), (x)=>new RGB(val, 0, x));
-        drawZGradient(ctx_z,  (z)=>new RGB(z, curr_xy[1], curr_xy[0]));
-    } else if (z_axis == 'G') {
+            drawZGradient(ctx_z,  (z)=>new RGB(z, curr_xy[1], curr_xy[0])); break;
+        case 'G':
         drawVertGradient(ctx, (x)=>new RGB(1, val, x), (x)=>new RGB(0, val, x));
-        drawZGradient(ctx_z,  (z)=>new RGB(curr_xy[1], z, curr_xy[0]));
-    } else if (z_axis == 'B') {
+            drawZGradient(ctx_z,  (z)=>new RGB(curr_xy[1], z, curr_xy[0])); break;
+        case 'B':
         drawVertGradient(ctx, (x)=>new RGB(x, 1, val), (x)=>new RGB(x, 0, val));
-        drawZGradient(ctx_z,  (z)=>new RGB(curr_xy[0], curr_xy[1], z));
+            drawZGradient(ctx_z,  (z)=>new RGB(curr_xy[0], curr_xy[1], z)); break;
     }
 }
 function getColor(z_axis, x, y, z) {
-    if (z_axis == 'H') {
+    switch (z_axis) {
+        case 'H':
         return new HSV(z, x, y);
-    } else if (z_axis == 'S') {
+        case 'S':
         return new HSV(x, z, y);
-    } else if (z_axis == 'V') {
+        case 'V':
         return new HSV(x, y, z);
-    } else if (z_axis == 'R') {
-        return new RGB(z, x, y);
-    } else if (z_axis == 'G') {
-        return new RGB(x, z, y);
-    } else if (z_axis == 'B') {
+        case 'R':
+            return new RGB(z, y, x);
+        case 'G':
+            return new RGB(y, z, x);
+        case 'B':
         return new RGB(x, y, z);
     }
 }
