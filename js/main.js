@@ -191,39 +191,55 @@ function drawZGradient(ctx, color_callback) {
 function drawXYZplot(ctx, z_axis, val) {
     switch(z_axis) {
         case 'H':
-        drawVertGradient(ctx, (x)=>new HSV(val, x, 1), (x)=>new HSV(val, x, 0));
+            drawVertGradient(ctx, (x)=>new HSV(val, x, 1), (x)=>new HSV(val, x, 0));
             drawZGradient(ctx_z,  (z)=>new HSV(z, 1, 1)); break;
         case 'S':
-        drawVertGradient(ctx, (x)=>new HSV(x, val, 1), (x)=>new HSV(0, val, 0));
+            drawVertGradient(ctx, (x)=>new HSV(x, val, 1), (x)=>new HSV(0, val, 0));
             drawZGradient(ctx_z,  (z)=>new HSV(curr_xy[0], z, curr_xy[1])); break;
         case 'V':
-        drawVertGradient(ctx, (x)=>new HSV(x, 1, val), (x)=>new HSV(0, 0, val));
+            drawVertGradient(ctx, (x)=>new HSV(x, 1, val), (x)=>new HSV(0, 0, val));
             drawZGradient(ctx_z,  (z)=>new HSV(curr_xy[0], curr_xy[1], z)); break;
         case 'R':
-        drawVertGradient(ctx, (x)=>new RGB(val, 1, x), (x)=>new RGB(val, 0, x));
+            drawVertGradient(ctx, (x)=>new RGB(val, 1, x), (x)=>new RGB(val, 0, x));
             drawZGradient(ctx_z,  (z)=>new RGB(z, curr_xy[1], curr_xy[0])); break;
         case 'G':
-        drawVertGradient(ctx, (x)=>new RGB(1, val, x), (x)=>new RGB(0, val, x));
+            drawVertGradient(ctx, (x)=>new RGB(1, val, x), (x)=>new RGB(0, val, x));
             drawZGradient(ctx_z,  (z)=>new RGB(curr_xy[1], z, curr_xy[0])); break;
         case 'B':
-        drawVertGradient(ctx, (x)=>new RGB(x, 1, val), (x)=>new RGB(x, 0, val));
+            drawVertGradient(ctx, (x)=>new RGB(x, 1, val), (x)=>new RGB(x, 0, val));
             drawZGradient(ctx_z,  (z)=>new RGB(curr_xy[0], curr_xy[1], z)); break;
     }
 }
 function getColor(z_axis, x, y, z) {
     switch (z_axis) {
         case 'H':
-        return new HSV(z, x, y);
+            return new HSV(z, x, y);
         case 'S':
-        return new HSV(x, z, y);
+            return new HSV(x, z, y);
         case 'V':
-        return new HSV(x, y, z);
+            return new HSV(x, y, z);
         case 'R':
             return new RGB(z, y, x);
         case 'G':
             return new RGB(y, z, x);
         case 'B':
-        return new RGB(x, y, z);
+            return new RGB(x, y, z);
+    }
+}
+function getXY(z_axis, color) {
+    switch (z_axis) {
+        case 'H':
+            return [color.s, color.v]
+        case 'S':
+            return [color.h, color.v]
+        case 'V':
+            return [color.h, color.s]
+        case 'R':
+            return [color.b, color.g]
+        case 'G':
+            return [color.b, color.r]
+        case 'B':
+            return [color.r, color.g]
     }
 }
 function drawCircle(ctx, x, y, r, color, width) {
@@ -252,9 +268,10 @@ function updateXYplot(x, y, update) {
         preview.style.backgroundColor = color.toRGB().toString();
     }
     drawXYZplot(ctx_xy, curr_z_axis, curr_z);
-    drawXYplotCursor(ctx_xy, 255*x, 255*(1-y), update);
-    // current color
-    drawCircle(ctx_xy, 255*curr_xy[0], 255*(1-curr_xy[1]), 8, "white", 1.5);
+    drawXYplotCursor(ctx_xy, 255*curr_xy[0], 255*(1-curr_xy[1]), true); // current color
+    if (!update) {
+        drawXYplotCursor(ctx_xy, 255*x, 255*(1-y), update);             // current cursor
+    }
 }
 updateXYplot(0, 0, true);
 
@@ -324,7 +341,8 @@ addEvent('input[type=radio]', 'change', function(evt) {
         default: new_color = color
     }
     curr_z = new_color[curr_z_axis.toLowerCase()]
-    drawZindicator(curr_z, false);
+    curr_xy = getXY(curr_z_axis, new_color);
+    drawZindicator(curr_z, true);
     updateXYplot(curr_xy[0], curr_xy[1], true);
 });
 addEvent('input[type=text]', 'change', function(evt) {
