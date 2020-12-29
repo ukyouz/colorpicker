@@ -125,7 +125,7 @@ class HSV {
     }
     toRGB() {
         let hi = Math.floor(this.h * 360 / 60) % 6;
-        let f = this.h * 360 / 60 - hi;
+        let f = (this.h == 1) ? 0 : this.h * 360 / 60 - hi;
         let v = this.v;
         let p = v * (1 - this.s);
         let q = v * (1 - this.s * f);
