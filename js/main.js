@@ -188,8 +188,7 @@ function drawZGradient(ctx, color_callback) {
         ctx.fillRect(0, y, 30, y);
     }
 }
-function drawXYplot(ctx, z_axis, val) {
-    //FIX: `val` scale
+function drawXYZplot(ctx, z_axis, val) {
     if (z_axis == 'H') {
         drawVertGradient(ctx, (x)=>new HSV(val, x, 1), (x)=>new HSV(val, x, 0));
         drawZGradient(ctx_z,  (z)=>new HSV(z, 1, 1));
@@ -210,6 +209,21 @@ function drawXYplot(ctx, z_axis, val) {
         drawZGradient(ctx_z,  (z)=>new RGB(curr_xy[0], curr_xy[1], z));
     }
 }
+function getColor(z_axis, x, y, z) {
+    if (z_axis == 'H') {
+        return new HSV(z, x, y);
+    } else if (z_axis == 'S') {
+        return new HSV(x, z, y);
+    } else if (z_axis == 'V') {
+        return new HSV(x, y, z);
+    } else if (z_axis == 'R') {
+        return new RGB(z, x, y);
+    } else if (z_axis == 'G') {
+        return new RGB(x, z, y);
+    } else if (z_axis == 'B') {
+        return new RGB(x, y, z);
+    }
+}
 function drawCircle(ctx, x, y, r, color, width) {
     ctx.lineWidth = width;
     ctx.strokeStyle = color;
@@ -226,27 +240,19 @@ function drawXYplotCursor(ctx, x, y, active) {
         drawCircle(ctx, x, y, 10, "black", 1);
     }
 }
+// param: x, y value in 0-1
 function updateXYplot(x, y, update) {
     ctx_xy.clearRect(0, 0, ctx_xy.width, ctx_xy.height);
-    preview.style.backgroundColor = "black";
-    drawXYplot(ctx_xy, curr_z_axis, curr_z);
-    drawXYplotCursor(ctx_xy, x, 255-y, update);
     if (update) {
-        curr_xy = [x/255, y/255];
-        console.log('xy changed', curr_xy);
+        curr_xy = [x, y];
+        color = getColor(curr_z_axis, curr_xy[0], curr_xy[1], curr_z)
+        // console.log('xy changed', curr_xy, color);
+        preview.style.backgroundColor = color.toRGB().toString();
     }
-    drawCircle(ctx_xy, x, 255-y, 8, "white", 1.5);
-}
-function updateZindicator(evt, update) {
-    if (update) {
-        var rect = xyplot.getBoundingClientRect();
-        var visual_z = STD_AXIS_255(evt.clientY - rect.top);
-        var z = 1 - visual_z / 255;
-        console.log('z changed', z);
-        z_indicator.style.top = visual_z + "px";
-        curr_z = z;
-        updateXYplot(255*curr_xy[0], 255*curr_xy[1], true);
-    }
+    drawXYZplot(ctx_xy, curr_z_axis, curr_z);
+    drawXYplotCursor(ctx_xy, 255*x, 255*(1-y), update);
+    // current color
+    drawCircle(ctx_xy, 255*curr_xy[0], 255*(1-curr_xy[1]), 8, "white", 1.5);
 }
 updateXYplot(0, 0, true);
 
@@ -258,7 +264,7 @@ function updateXYplotByXYaxis(mouseX, mouseY) {
     var rect = xyplot.getBoundingClientRect();
     var x = STD_AXIS_255(mouseX - rect.left);
     var y = (255 - STD_AXIS_255(mouseY - rect.top));
-    updateXYplot(x, y, xy_drag);
+    updateXYplot(x/255, y/255, xy_drag);
 }
 addEvent(document, 'mouseup', function (evt) {
     if (xy_drag) {
@@ -277,6 +283,24 @@ addEvent(xyplot, 'mousemove', function (evt) {
 });
 
 let z_drag = false;
+// param: z value in 0-1
+function drawZindicator(z, update) {
+    var visual_z = 255 * (1 - z);
+    z_indicator.style.top = visual_z + "px";
+    if (update) {
+        curr_z = z;
+        // console.log('z changed', z);
+    }
+}
+function updateZindicator(evt, dragging) {
+    if (dragging) {
+        var rect = zplot.getBoundingClientRect();
+        var visual_z = STD_AXIS_255(evt.clientY - rect.top);
+        var z = 1 - visual_z / 255;
+        drawZindicator(z, dragging);
+        updateXYplot(curr_xy[0], curr_xy[1], true);
+    }
+}
 addEvent(document, 'mouseup', (e) => {
     z_drag = false;
     body.classList.remove('dragging')
@@ -290,12 +314,16 @@ addEvent(zplot, 'mousemove', function (evt) {
     updateZindicator(evt, z_drag);
 });
 addEvent('input[type=radio]', 'change', function(evt) {
-    // console.log('z changed', dataform.coloraxis.value, evt.target.value);
+    let color = getColor(curr_z_axis, curr_xy[0], curr_xy[1], curr_z).toRGB();
     curr_z_axis = evt.target.value;
-    curr_z = dataform['coloraxis_'+curr_z_axis].value;
-    updateXYplot(255*curr_xy[0], 255*curr_xy[1], true);
-    // drawXYplot(ctx_xy, curr_z_axis, curr_z);
-    // drawZGradient(ctx_z, (y) => new RGB(202, 100, y));
+    switch(curr_z_axis) {
+        case 'H': case 'S': case 'V':           new_color = color.toHSV(); break;
+        case 'C': case 'M': case 'Y': case 'K': new_color = color.toCMYK(); break;
+        default: new_color = color
+    }
+    curr_z = new_color[curr_z_axis.toLowerCase()]
+    drawZindicator(curr_z, false);
+    updateXYplot(curr_xy[0], curr_xy[1], true);
 });
 addEvent('input[type=text]', 'change', function(evt) {
     console.log('curr_z=', dataform.coloraxis.value, 'val changed:', evt.target.name, evt.target.value);
