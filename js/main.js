@@ -242,6 +242,22 @@ function getXY(z_axis, color) {
             return [color.r, color.g]
     }
 }
+function syncFormInputValue(color) {
+    let rgb = color.toRGB();
+    let hsv = rgb.toHSV();
+    let cmyk = rgb.toCMYK();
+    dataform.coloraxis_R.value = Math.round(rgb.r * 255);
+    dataform.coloraxis_G.value = Math.round(rgb.g * 255);
+    dataform.coloraxis_B.value = Math.round(rgb.b * 255);
+    dataform.colorcode_rgb.value = rgb.toString().substring(1);
+    dataform.coloraxis_H.value = Math.round(hsv.h * 360);
+    dataform.coloraxis_S.value = Math.round(hsv.s * 100);
+    dataform.coloraxis_V.value = Math.round(hsv.v * 100);
+    dataform.coloraxis_C.value = Math.round(cmyk.c * 100);
+    dataform.coloraxis_M.value = Math.round(cmyk.m * 100);
+    dataform.coloraxis_Y.value = Math.round(cmyk.y * 100);
+    dataform.coloraxis_K.value = Math.round(cmyk.k * 100);
+}
 function drawCircle(ctx, x, y, r, color, width) {
     ctx.lineWidth = width;
     ctx.strokeStyle = color;
@@ -259,13 +275,14 @@ function drawXYplotCursor(ctx, x, y, active) {
     }
 }
 // param: x, y value in 0-1
-function updateXYplot(x, y, update) {
+function updateXYZplot(x, y, update) {
     ctx_xy.clearRect(0, 0, ctx_xy.width, ctx_xy.height);
     if (update) {
         curr_xy = [x, y];
         color = getColor(curr_z_axis, curr_xy[0], curr_xy[1], curr_z)
         // console.log('xy changed', curr_xy, color);
         preview.style.backgroundColor = color.toRGB().toString();
+        syncFormInputValue(color);
     }
     drawXYZplot(ctx_xy, curr_z_axis, curr_z);
     drawXYplotCursor(ctx_xy, 255*curr_xy[0], 255*(1-curr_xy[1]), true); // current color
@@ -273,17 +290,14 @@ function updateXYplot(x, y, update) {
         drawXYplotCursor(ctx_xy, 255*x, 255*(1-y), update);             // current cursor
     }
 }
-updateXYplot(0, 0, true);
-
-// if x < 0: x = 0
-// if x > 255: x = 255
+updateXYZplot(0, 0, true);
 
 let xy_drag = false;
 function updateXYplotByXYaxis(mouseX, mouseY) {
     var rect = xyplot.getBoundingClientRect();
     var x = STD_AXIS_255(mouseX - rect.left);
     var y = (255 - STD_AXIS_255(mouseY - rect.top));
-    updateXYplot(x/255, y/255, xy_drag);
+    updateXYZplot(x/255, y/255, xy_drag);
 }
 addEvent(document, 'mouseup', function (evt) {
     if (xy_drag) {
@@ -317,7 +331,7 @@ function updateZindicator(evt, dragging) {
         var visual_z = STD_AXIS_255(evt.clientY - rect.top);
         var z = 1 - visual_z / 255;
         drawZindicator(z, dragging);
-        updateXYplot(curr_xy[0], curr_xy[1], true);
+        updateXYZplot(curr_xy[0], curr_xy[1], true);
     }
 }
 addEvent(document, 'mouseup', (e) => {
@@ -343,7 +357,7 @@ addEvent('input[type=radio]', 'change', function(evt) {
     curr_z = new_color[curr_z_axis.toLowerCase()]
     curr_xy = getXY(curr_z_axis, new_color);
     drawZindicator(curr_z, true);
-    updateXYplot(curr_xy[0], curr_xy[1], true);
+    updateXYZplot(curr_xy[0], curr_xy[1], true);
 });
 addEvent('input[type=text]', 'change', function(evt) {
     console.log('curr_z=', dataform.coloraxis.value, 'val changed:', evt.target.name, evt.target.value);
