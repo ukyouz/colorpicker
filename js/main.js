@@ -314,6 +314,10 @@ addEvent(xyplot, 'mousedown', function (evt) {
 addEvent(xyplot, 'mousemove', function (evt) {
     updateXYplotByXYaxis(evt.clientX, evt.clientY);
 });
+addEvent(document, 'mousemove', function (evt) {
+    if (xy_drag)
+        updateXYplotByXYaxis(evt.clientX, evt.clientY);
+});
 
 let z_drag = false;
 // param: z value in 0-1
@@ -343,8 +347,9 @@ addEvent(zplot, 'mousedown', function (evt) {
     body.classList.add('dragging');
     updateZindicator(evt, z_drag);
 });
-addEvent(zplot, 'mousemove', function (evt) {
-    updateZindicator(evt, z_drag);
+addEvent(document, 'mousemove', function (evt) {
+    if (z_drag)
+        updateZindicator(evt, z_drag);
 });
 addEvent('input[type=radio]', 'change', function(evt) {
     let color = getColor(curr_z_axis, curr_xy[0], curr_xy[1], curr_z).toRGB();
