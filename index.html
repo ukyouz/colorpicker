@@ -8,6 +8,7 @@
     <style>
         body {
             min-height: 90vh;
+            font-family: monospace;
         }
         section {
             display: flex;
@@ -24,14 +25,14 @@
         }
         form {
             display: grid;
-            grid-template-columns: 8.5em 8em;
+            grid-template-columns: 10em 10em;
         }
         input[type="radio"], span.radio_padding {
             width: 16px;
             display: inline-block;
         }
         input[type="number"] {
-            width: 2.5em;
+            width: 3em;
         }
         #xy-plot {
             width: 256px;
@@ -66,6 +67,7 @@
         .z-plot-indicator:before {
             content: "▶";
             left: -8px;
+            text-align: right;
         }
         .z-plot-indicator:after {
             content: "◀";
@@ -84,7 +86,7 @@
         }
         .color-mode__cmyk {
             display: grid;
-            grid-template-columns: 7em 7em;
+            grid-template-columns: 10em 10em;
         }
         .color-label {
             font-family: monospace;
@@ -143,7 +145,7 @@
                         <li class="color-field">
                             <span class="radio_padding"></span>
                             <span class="color-label align-right">#</span>
-                            <input type="text" name="colorcode_rgb" style="width: 3.5em" value="000000">
+                            <input type="text" name="colorcode_rgb" style="width: 4em" value="000000">
                         </li>
                     </ul>
                     <ul class="color-mode color-mode__hsb">
@@ -181,7 +183,7 @@
                             <span class="color-label">%</span>
                         </li>
                         <li class="color-field">
-                            <span class="radio_padding"></span>
+                            <!-- <span class="radio_padding"></span> -->
                             <span class="color-label">Y:</span>
                             <input type="number" name="coloraxis_Y" value="0" min="0" max="100" step="1">
                             <span class="color-label">%</span>
@@ -193,7 +195,7 @@
                             <span class="color-label">%</span>
                         </li>
                         <li class="color-field">
-                            <span class="radio_padding"></span>
+                            <!-- <span class="radio_padding"></span> -->
                             <span class="color-label">K:</span>
                             <input type="number" name="coloraxis_K" value="0" min="0" max="100" step="1">
                             <span class="color-label">%</span>
