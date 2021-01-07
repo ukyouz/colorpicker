@@ -49,7 +49,7 @@ class RGB {
     }
     toHSV() {
         let r = this.r, g = this.g, b = this.b;
-        let min = Math.min(r, g, b), max = Math.max(r, g, b);
+        let min = Math.min(r, g, b), max = Math.max(r, g, b), c = max - min;
         let h = 0, s = 0, v = max;
         if (max == min)
             h = 0
@@ -62,7 +62,7 @@ class RGB {
         else if (max == b)
             h = 60 * (r - g) / (max - min) + 240;
         if (max > 0)
-            s = 1 - min/max;
+            s = c/v;
         return new HSV(h/360, s, v);
     }
 }
@@ -159,6 +159,15 @@ function addEvent(target, event_type, callback) {
         }
     }, true);
 }
+String.prototype.isValidHex = function() {
+    let valid_hex_chars = "0123456789abcdef";
+    for (var [ind, c] of this.split("").entries()) {
+        if (valid_hex_chars.indexOf(c.toLowerCase()) == -1) {
+            return false;
+        }
+    }
+    return true;
+}
 
 var body = document.body;
 var xyplot = document.getElementById("xy-plot"); xyplot.width = 256, xyplot.height = 256;
@@ -242,21 +251,54 @@ function getXY(z_axis, color) {
             return [color.r, color.g]
     }
 }
-function syncFormInputValue(color) {
+function syncPlotXYZValue(z_axis, axis, value) {
+    if (z_axis == axis) {
+        curr_z = value;
+        return;
+    }
+    let color = getColor(z_axis, curr_xy[0], curr_xy[1], curr_z).toRGB()
+    switch (axis) {
+        case 'R': case 'G': case 'B': color = color.toRGB(); break;
+        case 'H': case 'S': case 'V': color = color.toHSV(); break;
+        case 'C': case 'M': case 'Y': case 'K': color = color.toCMYK(); break;
+    }
+    color[axis.toLowerCase()] = value;
+    color = color.toRGB();
+    switch(z_axis) {
+        case 'H': case 'S': case 'V': color = color.toHSV(); break;
+        case 'R': case 'G': case 'B': color = color.toRGB(); break;
+    }
+    switch(z_axis) {
+        case 'H': curr_xy = [color.s, color.v]; break;
+        case 'S': curr_xy = [color.h, color.v]; break;
+        case 'V': curr_xy = [color.h, color.s]; break;
+        case 'R': curr_xy = [color.b, color.g]; break;
+        case 'G': curr_xy = [color.b, color.r]; break;
+        case 'B': curr_xy = [color.r, color.g]; break;
+    }
+    curr_z = color[z_axis.toLowerCase()];
+}
+function syncFormInputValue(color, exclude) {
     let rgb = color.toRGB();
     let hsv = rgb.toHSV();
     let cmyk = rgb.toCMYK();
-    dataform.coloraxis_R.value = Math.round(rgb.r * 255);
-    dataform.coloraxis_G.value = Math.round(rgb.g * 255);
-    dataform.coloraxis_B.value = Math.round(rgb.b * 255);
-    dataform.colorcode_rgb.value = rgb.toString().substring(1);
-    dataform.coloraxis_H.value = Math.round(hsv.h * 360);
-    dataform.coloraxis_S.value = Math.round(hsv.s * 100);
-    dataform.coloraxis_V.value = Math.round(hsv.v * 100);
-    dataform.coloraxis_C.value = Math.round(cmyk.c * 100);
-    dataform.coloraxis_M.value = Math.round(cmyk.m * 100);
-    dataform.coloraxis_Y.value = Math.round(cmyk.y * 100);
-    dataform.coloraxis_K.value = Math.round(cmyk.k * 100);
+    if (!exclude || exclude.constructor != RGB) {
+        dataform.coloraxis_R.value = Math.round(rgb.r * 255);
+        dataform.coloraxis_G.value = Math.round(rgb.g * 255);
+        dataform.coloraxis_B.value = Math.round(rgb.b * 255);
+        dataform.colorcode_rgb.value = rgb.toString().substring(1);
+    }
+    if (!exclude || exclude.constructor != HSV) {
+        dataform.coloraxis_H.value = Math.round(hsv.h * 360);
+        dataform.coloraxis_S.value = Math.round(hsv.s * 100);
+        dataform.coloraxis_V.value = Math.round(hsv.v * 100);
+    }
+    if (!exclude || exclude.constructor != CMYK) {
+        dataform.coloraxis_C.value = Math.round(cmyk.c * 100);
+        dataform.coloraxis_M.value = Math.round(cmyk.m * 100);
+        dataform.coloraxis_Y.value = Math.round(cmyk.y * 100);
+        dataform.coloraxis_K.value = Math.round(cmyk.k * 100);
+    }
 }
 function drawCircle(ctx, x, y, r, color, width) {
     ctx.lineWidth = width;
@@ -275,14 +317,14 @@ function drawXYplotCursor(ctx, x, y, active) {
     }
 }
 // param: x, y value in 0-1
-function updateXYZplot(x, y, update) {
+function updateXYZplot(x, y, update, exclude) {
     ctx_xy.clearRect(0, 0, ctx_xy.width, ctx_xy.height);
     if (update) {
         curr_xy = [x, y];
         color = getColor(curr_z_axis, curr_xy[0], curr_xy[1], curr_z)
         // console.log('xy changed', curr_xy, color);
         preview.style.backgroundColor = color.toRGB().toString();
-        syncFormInputValue(color);
+        syncFormInputValue(color, exclude);
     }
     drawXYZplot(ctx_xy, curr_z_axis, curr_z);
     drawXYplotCursor(ctx_xy, 255*curr_xy[0], 255*(1-curr_xy[1]), true); // current color
@@ -290,6 +332,7 @@ function updateXYZplot(x, y, update) {
         drawXYplotCursor(ctx_xy, 255*x, 255*(1-y), update);             // current cursor
     }
 }
+drawZindicator(curr_z, true);
 updateXYZplot(0, 0, true);
 
 let xy_drag = false;
@@ -364,9 +407,16 @@ addEvent('input[type=radio]', 'change', function(evt) {
     drawZindicator(curr_z, true);
     updateXYZplot(curr_xy[0], curr_xy[1], true);
 });
-addEvent('input[type=text]', 'change', function(evt) {
+addEvent('input[type=text]', 'input', function(evt) {
+    if (!evt.target.value.isValidHex()) return;
     console.log('curr_z=', dataform.coloraxis.value, 'val changed:', evt.target.name, evt.target.value);
 });
 addEvent('input[type=number]', 'change', function(evt) {
-    console.log('curr_z=', dataform.coloraxis.value, 'val changed:', evt.target.name, evt.target.value);
+    changed_axis = evt.target.name[evt.target.name.length - 1]
+    value = parseInt(evt.target.value) / evt.target.max;
+    syncPlotXYZValue(curr_z_axis, changed_axis, value);
+    color = getColor(curr_z_axis, curr_xy[0], curr_xy[1], curr_z);
+    console.log('curr_z=', dataform.coloraxis.value, 'val changed:', evt.target.name, evt.target.value, color);
+    drawZindicator(curr_z, false);
+    updateXYZplot(curr_xy[0], curr_xy[1], false, color);
 });
