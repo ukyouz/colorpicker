@@ -328,9 +328,6 @@ function updateXYZplot(x, y, update, exclude) {
     }
     drawXYZplot(ctx_xy, curr_z_axis, curr_z);
     drawXYplotCursor(ctx_xy, 255*curr_xy[0], 255*(1-curr_xy[1]), true); // current color
-    if (!update) {
-        drawXYplotCursor(ctx_xy, 255*x, 255*(1-y), update);             // current cursor
-    }
 }
 drawZindicator(curr_z, true);
 updateXYZplot(0, 0, true);
@@ -341,6 +338,7 @@ function updateXYplotByXYaxis(mouseX, mouseY) {
     var x = STD_AXIS_255(mouseX - rect.left);
     var y = (255 - STD_AXIS_255(mouseY - rect.top));
     updateXYZplot(x/255, y/255, xy_drag);
+    drawXYplotCursor(ctx_xy, x, 255-y, xy_drag);             // current cursor
 }
 addEvent(document, 'mouseup', function (evt) {
     if (xy_drag) {
@@ -351,7 +349,6 @@ addEvent(document, 'mouseup', function (evt) {
 });
 addEvent(xyplot, 'mousedown', function (evt) {
     xy_drag = true;
-    body.classList.add('dragging');
     updateXYplotByXYaxis(evt.clientX, evt.clientY);
 });
 addEvent(xyplot, 'mousemove', function (evt) {
