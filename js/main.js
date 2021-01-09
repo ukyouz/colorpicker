@@ -280,24 +280,26 @@ function syncPlotXYZValue(z_axis, axis, value) {
 }
 function syncFormInputValue(color, exclude) {
     let rgb = color.toRGB();
-    let hsv = rgb.toHSV();
-    let cmyk = rgb.toCMYK();
     if (!exclude || exclude.constructor != RGB) {
         dataform.coloraxis_R.value = Math.round(rgb.r * 255);
         dataform.coloraxis_G.value = Math.round(rgb.g * 255);
         dataform.coloraxis_B.value = Math.round(rgb.b * 255);
-        dataform.colorcode_rgb.value = rgb.toString().substring(1);
     }
     if (!exclude || exclude.constructor != HSV) {
+        let hsv = rgb.toHSV();
         dataform.coloraxis_H.value = Math.round(hsv.h * 360);
         dataform.coloraxis_S.value = Math.round(hsv.s * 100);
         dataform.coloraxis_V.value = Math.round(hsv.v * 100);
     }
     if (!exclude || exclude.constructor != CMYK) {
+        let cmyk = rgb.toCMYK();
         dataform.coloraxis_C.value = Math.round(cmyk.c * 100);
         dataform.coloraxis_M.value = Math.round(cmyk.m * 100);
         dataform.coloraxis_Y.value = Math.round(cmyk.y * 100);
         dataform.coloraxis_K.value = Math.round(cmyk.k * 100);
+    }
+    if (!exclude || exclude != "colorcode") {
+        dataform.colorcode_rgb.value = rgb.toString().substring(1);
     }
 }
 function drawCircle(ctx, x, y, r, color, width) {
@@ -407,6 +409,18 @@ addEvent('input[type=radio]', 'change', function(evt) {
 addEvent('input[type=text]', 'input', function(evt) {
     if (!evt.target.value.isValidHex()) return;
     console.log('curr_z=', dataform.coloraxis.value, 'val changed:', evt.target.name, evt.target.value);
+    let rgb = parseInt(evt.target.value, 16);
+    if (evt.target.value.length == 3) {
+        syncPlotXYZValue(curr_z_axis, 'R', ((rgb >> 8))/0xF);
+        syncPlotXYZValue(curr_z_axis, 'G', ((rgb >> 4) & 0xF)/0xF);
+        syncPlotXYZValue(curr_z_axis, 'B', ((rgb >> 0) & 0xF)/0xF);
+    } else {
+        syncPlotXYZValue(curr_z_axis, 'R', ((rgb >> 16))/0xFF);
+        syncPlotXYZValue(curr_z_axis, 'G', ((rgb >> 8) & 0xFF)/0xFF);
+        syncPlotXYZValue(curr_z_axis, 'B', ((rgb >> 0) & 0xFF)/0xFF);
+    }
+    drawZindicator(curr_z, false);
+    updateXYZplot(curr_xy[0], curr_xy[1], true, "colorcode");
 });
 addEvent('input[type=number]', 'change', function(evt) {
     changed_axis = evt.target.name[evt.target.name.length - 1]
@@ -415,5 +429,6 @@ addEvent('input[type=number]', 'change', function(evt) {
     color = getColor(curr_z_axis, curr_xy[0], curr_xy[1], curr_z);
     console.log('curr_z=', dataform.coloraxis.value, 'val changed:', evt.target.name, evt.target.value, color);
     drawZindicator(curr_z, false);
-    updateXYZplot(curr_xy[0], curr_xy[1], false, color);
+    updateXYZplot(curr_xy[0], curr_xy[1], true, color);
+    syncFormInputValue(color, getColor(changed_axis, 0, 0, 0));
 });
