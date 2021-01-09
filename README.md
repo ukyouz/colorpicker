@@ -1,2 +1,5 @@
 # colorpicker
-A simple color picker webpage
+A simple color picker webpage.
+
+
+![screenshot](screenshot.png)
